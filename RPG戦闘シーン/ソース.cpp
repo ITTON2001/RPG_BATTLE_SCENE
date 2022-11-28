@@ -235,6 +235,10 @@ void Battle(int _monster) {
 				{
 				//プレイヤーなら
 				case CHARACTER_PLAYER:
+					//戦闘シーンの画面を再描画する関数を呼び出す
+					DrawBattleScreen();
+					//ゲームオーバー
+					printf("%sは　たおされた・・・\n", characters[characters[i].target].name);
 					break;
 
 				//モンスターなら
