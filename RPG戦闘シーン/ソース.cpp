@@ -1,7 +1,9 @@
 //[1]ヘッダーをインクルードする場所
 #include <stdio.h>//標準入出力ヘッダーをインクルード
 #include <stdlib.h>//標準ライブラリヘッダーをインクルードする
+#include <time.h>//時間管理ヘッダーをインクルードする
 #include <conio.h>//コンソール入出力ヘッダーをインクルード
+#include <string.h>//文字操作ヘッダーをインクルードする
 //[2]定数を定義する場所
 
 //[3]列挙定数を定義する場所
@@ -35,9 +37,11 @@ typedef struct {
 	int maxHp; //最大HP
 	int mp;    //MP
 	int maxMp; //最大MP
+	int attack;//攻撃力
 	char name[4 * 2 + 1];//名前
 	char aa[256];//アスキーアート
 	int command; //コマンド
+	int target;	//攻撃対象
 }CHRACTER;
 
 //[5]変数を宣言する場所
@@ -49,6 +53,7 @@ CHRACTER monsters[MONSTER_MAX] = {
 		15,			//int maxHp :最大HP
 		15,			//int mp :MP
 		15,			//int maxMp :最大MP
+		3,			//int attack :攻撃力
 		"ゆうしゃ"  //char name[name[4 * 2 + 1]; 名前
 	},
 
@@ -58,10 +63,18 @@ CHRACTER monsters[MONSTER_MAX] = {
 		3,			//int maxHp :最大HP
 		0,			//int mp :MP
 		0,			//int maxMp :最大MP
+		2,			//int attack :攻撃力
 		"スライム",  //char name[name[4 * 2 + 1]; 名前
 		"／・Д・＼\n"
 		"～～～～～"
 	}
+};
+
+//コマンドの名前を宣言する
+char commandNames[COMMAND_MAX][4 * 2 + 1] = {
+	"たたかう",	//COMMAND_FIGHT 戦う
+	"じゅもん", //COMMAND_SPELL 呪文
+	"にげる"	//COMMAND_RUN	逃げる
 };
 
 //キャラクターの配列を宣言する
@@ -103,9 +116,52 @@ void DrawBattleScreen(){
 
 	//1行空ける
 	printf("\n");
+}
 
-	//戦闘シーンの最初のメッセージを表示
-	printf("%sが　あらわれた！\n", characters[CHARACTER_MONSTER].name);
+//コマンドを選択する関数を宣言する
+void SelectCommand() {
+	//コマンドが決定されるまで無限ループする
+	while (1)
+	{
+		//戦闘画面を描写する関数を呼び出す
+		DrawBattleScreen();
+		//コマンドの一覧を表示する
+		for (int i = 0; i < COMMAND_MAX; i++) {
+			//選択中のコマンドの時
+			if (i == characters[CHARACTER_PLAYER].command)
+			{
+				//カーソルを描写する
+				printf("＞");
+			}
+			//選択中のコマンドでなければ
+			else {
+				//全角スペースを入れる
+				printf("　");
+			}
+			//コマンドの名前を表示する
+			printf("%s\n", commandNames[i]);
+		}
+		//入力されたキーによって分岐する
+		switch (_getch())
+		{
+		case 'w'://wキーが押されたら
+			//上のコマンドに切り替える
+			characters[CHARACTER_PLAYER].command--;//enumで定義したcommandの数値を1減らしている
+			break;
+		case 's'://sキーが押されたら
+			//下のコマンドに切り替える
+			characters[CHARACTER_PLAYER].command++;//enumで定義したcommandの数値を1増やしている
+			break;
+		default://上記以外のキーが押されたら
+			return;//関数を抜ける
+		}
+
+		//カーソルを上下にループさせる
+		characters[CHARACTER_PLAYER].command =
+			(COMMAND_MAX + characters[CHARACTER_PLAYER].command) % COMMAND_MAX;
+
+	}
+
 }
 
 //戦闘シーンの関数を宣言
@@ -114,12 +170,23 @@ void Battle(int _monster) {
 	characters[CHARACTER_MONSTER] = monsters[_monster];
 	//戦闘シーンの画面を描画する関数を呼び出す
 	DrawBattleScreen();
+	//戦闘シーンの最初のメッセージを表示
+	printf("%sが　あらわれた！\n", characters[CHARACTER_MONSTER].name);
 	//キーボード入力を待つ
 	_getch();
+
+	//プレイヤーの攻撃対象をモンスターに設定する
+	characters[CHARACTER_PLAYER].target = CHARACTER_MONSTER;
+
+	//モンスターの攻撃対象をプレイヤーに設定する
+	characters[CHARACTER_MONSTER].target = CHARACTER_PLAYER;
 
 	//戦闘が終了するまでループする
 	while (1)
 	{
+		//コマンドを選択する関数を呼び出す
+		SelectCommand();
+		
 		//各キャラクターを反復する
 		for (int i = 0; i < CHARACTER_MAX; i++)
 		{
@@ -130,20 +197,73 @@ void Battle(int _monster) {
 			switch (characters[i].command)
 			{
 			case COMMAND_FIGHT:	//戦う
+			{
 				//攻撃するメッセージを表示
 				printf("%sの　こうげき！\n", characters[i].name);
+				//敵に与えるダメージを計算する
+				int damage = 1 + rand() % characters[i].attack;
+				//敵にダメージを与える
+				characters[characters[i].target].hp -= damage;
+				//敵のHPが負の値になったかどうか判定する
+				if (characters[characters[i].target].hp < 0)
+				{
+					//敵のHPを0にする
+					characters[characters[i].target].hp = 0;
+				}
+				//戦闘シーンの画面を再描画する関数を呼び出す
+				DrawBattleScreen();
+
+				//敵にダメージを与えたメッセージを表示する
+				printf("%sに　%dの　ダメージ！\n",characters[characters[i].target].name,damage);
+
+				//キーボード入力を待つ
+				_getch();
+
 				break;
+			}
 			case COMMAND_SPELL:	//呪文
 				break;
 			case COMMAND_RUN:	//逃げる
 				break;
 			}
+
+			//攻撃対象を倒したかどうかを判定する
+			if (characters[characters[i].target].hp <= 0)
+			{
+				//攻撃対象によって分岐させる
+				switch (characters[i].target)
+				{
+				//プレイヤーなら
+				case CHARACTER_PLAYER:
+					break;
+
+				//モンスターなら
+				case CHARACTER_MONSTER:
+					//モンスターのアスキーアートを何も表示しないように書き換える
+					strcpy_s(characters[characters[i].target].aa, "\n");
+					//戦闘シーンの画面を再描画する関数を呼び出す
+					DrawBattleScreen();
+					//モンスターを倒したメッセージを表示する
+					printf("%sを　たおした！\n", characters[characters[i].target].name);
+
+					break;
+				}
+
+				//キーボード入力を待つ
+				_getch();
+
+				//戦闘シーンの関数を抜ける
+				return;
+			}
 		}
 	}
 }
 
+
 //プログラムの実行開始を宣言
 int main() {
+	//乱数をシャッフルする
+	srand((unsigned int)time(NULL));
 	//ゲームを初期化する変数を呼び出す
 	Init();
 	//戦闘シーンの関数を呼び出す
