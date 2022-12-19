@@ -224,7 +224,14 @@ void Battle(int _monster) {
 			case COMMAND_SPELL:	//呪文
 				break;
 			case COMMAND_RUN:	//逃げる
-				break;
+				//逃げ出したメッセージを表示
+				printf("%sは　にげだした！\n", characters[i].name);
+
+				//キーボード入力を待つ
+				_getch();
+
+				//戦闘シーンの関数を抜ける
+				return;
 			}
 
 			//攻撃対象を倒したかどうかを判定する
