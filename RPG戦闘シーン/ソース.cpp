@@ -214,7 +214,7 @@ void Battle(int _monster) {
 				DrawBattleScreen();
 
 				//敵にダメージを与えたメッセージを表示する
-				printf("%sに　%dの　ダメージ！\n",characters[characters[i].target].name,damage);
+				printf("%sに　%dの　ダメージ！\n", characters[characters[i].target].name, damage);
 
 				//キーボード入力を待つ
 				_getch();
@@ -230,8 +230,20 @@ void Battle(int _monster) {
 				//キーボード入力を待つ
 				_getch();
 
-				//戦闘シーンの関数を抜ける
-				return;
+				int run = rand() % 6 + 1;
+				if (run == 1) {
+					//逃げ出し失敗のメッセージを表示
+					printf("しかし　にげられなかった・・・");
+
+					//キーボード入力を待つ
+					_getch();
+
+					break;
+				}
+				else{
+					//戦闘シーンの関数を抜ける
+					return;
+				}
 			}
 
 			//攻撃対象を倒したかどうかを判定する
