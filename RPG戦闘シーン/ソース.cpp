@@ -5,6 +5,7 @@
 #include <conio.h>//コンソール入出力ヘッダーをインクルード
 #include <string.h>//文字操作ヘッダーをインクルードする
 //[2]定数を定義する場所
+#define SPELL_COST	(3) //呪文の消費MPを定義する
 
 //[3]列挙定数を定義する場所
 //キャラクターの種類を定義
@@ -19,6 +20,7 @@ enum
 {
 	MONSTER_PLAYER,//プレイヤー
 	MONSTER_SMILE, //スライム
+	MONSTER_BOSS,	//魔王
 	MONSTER_MAX    //モンスターの種類の数
 };
 //コマンドの種類を定義する
@@ -49,8 +51,8 @@ typedef struct {
 CHRACTER monsters[MONSTER_MAX] = {
 	//プレイヤー
 	{
-		15,			//int hp :HP
-		15,			//int maxHp :最大HP
+		150,		//int hp :HP
+		150,		//int maxHp :最大HP
 		15,			//int mp :MP
 		15,			//int maxMp :最大MP
 		3,			//int attack :攻撃力
@@ -67,6 +69,18 @@ CHRACTER monsters[MONSTER_MAX] = {
 		"スライム",  //char name[name[4 * 2 + 1]; 名前
 		"／・Д・＼\n"
 		"～～～～～"
+	},
+
+	//魔王
+	{
+		255,		//int hp :HP
+		255,		//int maxHp :最大HP
+		0,			//int mp :MP
+		0,			//int maxMp :最大MP
+		50,			//int attack :攻撃力
+		"まおう",	//char name[name[4 * 2 + 1]; 名前
+		"　　Ａ＠Ａ\n"
+		"ψ（▼皿▼）ψ"
 	}
 };
 
@@ -120,6 +134,9 @@ void DrawBattleScreen(){
 
 //コマンドを選択する関数を宣言する
 void SelectCommand() {
+	//プレイヤーのコマンドを戦うに初期化する
+	characters[CHARACTER_PLAYER].command = COMMAND_FIGHT;
+
 	//コマンドが決定されるまで無限ループする
 	while (1)
 	{
@@ -222,6 +239,43 @@ void Battle(int _monster) {
 				break;
 			}
 			case COMMAND_SPELL:	//呪文
+				//MPが足りるかどうか判断する
+				if (characters[i].mp < SPELL_COST)
+				{
+					//MPが足りないメッセージを表示する
+					printf("ＭＰが　たりない・・・\n");
+
+					//キーボード入力を待つ
+					_getch();
+
+					//呪文を唱える処理を抜ける
+					break;
+				}
+
+				//MPを消費させる
+				characters[i].mp -= SPELL_COST;
+
+				//戦闘シーンの画面を再描画する
+				DrawBattleScreen();
+
+				//呪文を唱えたメッセージを表示
+				printf("%sは　ヒールを　となえた！\n", characters[i].name);
+
+				//キーボード入力を待つ
+				_getch();
+
+				//HPを回復させる
+				characters[i].hp = characters[i].maxHp;
+
+				//戦闘シーンの画面を再描画する
+				DrawBattleScreen();
+
+				//HPが回復したメッセージを表示する
+				printf("%sのHPが　かいふくした！\n", characters[i].name);
+
+				//キーボード入力を待つ
+				_getch();
+
 				break;
 			case COMMAND_RUN:	//逃げる
 				//逃げ出したメッセージを表示
@@ -293,7 +347,7 @@ int main() {
 	//ゲームを初期化する変数を呼び出す
 	Init();
 	//戦闘シーンの関数を呼び出す
-	Battle(MONSTER_SMILE);
+	Battle(MONSTER_BOSS);
 }
 
 
